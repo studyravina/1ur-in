@@ -1,0 +1,318 @@
+openapi: 3.1.0
+info:
+  title: Api
+  version: 0.1.0
+  description: 1ur.in URL Shortener API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: urls
+    description: URL shortening operations
+  - name: payments
+    description: Payment and subscription operations
+  - name: user
+    description: User operations
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /urls:
+    get:
+      operationId: listUrls
+      tags: [urls]
+      summary: List user's shortened URLs
+      security:
+        - clerkAuth: []
+      responses:
+        "200":
+          description: List of URLs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ShortUrl"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    post:
+      operationId: createUrl
+      tags: [urls]
+      summary: Create a shortened URL
+      security:
+        - clerkAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateUrlBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ShortUrl"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: URL limit reached
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /urls/{id}:
+    delete:
+      operationId: deleteUrl
+      tags: [urls]
+      summary: Delete a shortened URL
+      security:
+        - clerkAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /user/me:
+    get:
+      operationId: getMe
+      tags: [user]
+      summary: Get current user profile
+      security:
+        - clerkAuth: []
+      responses:
+        "200":
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /payments/create-order:
+    post:
+      operationId: createPaymentOrder
+      tags: [payments]
+      summary: Create a Razorpay order for a subscription plan
+      security:
+        - clerkAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateOrderBody"
+      responses:
+        "200":
+          description: Order created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateOrderResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /payments/verify:
+    post:
+      operationId: verifyPayment
+      tags: [payments]
+      summary: Verify and activate a Razorpay payment
+      security:
+        - clerkAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VerifyPaymentBody"
+      responses:
+        "200":
+          description: Payment verified and plan activated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+        "400":
+          description: Payment verification failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+components:
+  securitySchemes:
+    clerkAuth:
+      type: http
+      scheme: bearer
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+
+    ShortUrl:
+      type: object
+      properties:
+        id:
+          type: string
+        slug:
+          type: string
+        originalUrl:
+          type: string
+        clicks:
+          type: integer
+        createdAt:
+          type: string
+        userId:
+          type: string
+      required:
+        - id
+        - slug
+        - originalUrl
+        - clicks
+        - createdAt
+        - userId
+
+    CreateUrlBody:
+      type: object
+      properties:
+        originalUrl:
+          type: string
+        customSlug:
+          type: ["string", "null"]
+      required:
+        - originalUrl
+
+    UserProfile:
+      type: object
+      properties:
+        userId:
+          type: string
+        email:
+          type: string
+        plan:
+          type: string
+        urlLimit:
+          type: integer
+        urlsUsed:
+          type: integer
+        urlsRemaining:
+          type: integer
+      required:
+        - userId
+        - email
+        - plan
+        - urlLimit
+        - urlsUsed
+        - urlsRemaining
+
+    CreateOrderBody:
+      type: object
+      properties:
+        planId:
+          type: string
+      required:
+        - planId
+
+    CreateOrderResponse:
+      type: object
+      properties:
+        orderId:
+          type: string
+        amount:
+          type: integer
+        currency:
+          type: string
+        planId:
+          type: string
+        razorpayKeyId:
+          type: string
+      required:
+        - orderId
+        - amount
+        - currency
+        - planId
+        - razorpayKeyId
+
+    VerifyPaymentBody:
+      type: object
+      properties:
+        razorpayOrderId:
+          type: string
+        razorpayPaymentId:
+          type: string
+        razorpaySignature:
+          type: string
+        planId:
+          type: string
+      required:
+        - razorpayOrderId
+        - razorpayPaymentId
+        - razorpaySignature
+        - planId

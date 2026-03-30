@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "1ur.in URL Shortener"
+version = "1.0.0"
+id = "artifacts/url-shortener"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 21875
+
+[services.development]
+run = "pnpm --filter @workspace/url-shortener run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/url-shortener", "run", "build" ]
+publicDir = "artifacts/url-shortener/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "21875"
+BASE_PATH = "/"

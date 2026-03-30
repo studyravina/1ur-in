@@ -1,0 +1,13 @@
+packages:
+  "framer-motion": "For page transitions and interactive animations"
+  "date-fns": "For formatting URL creation dates"
+  "@clerk/react": "Required for authentication as specified in instructions"
+
+images:
+  - path: "artifacts/url-shortener/public/images/hero-bg.png"
+    description: "Abstract modern dark background with subtle deep purple and indigo glowing meshes, clean tech startup aesthetic, very minimal"
+    aspect_ratio: "16:9"
+
+notes:
+  - Using @workspace/api-client-react for all API interactions
+  - Relies on VITE_CLERK_PUBLISHABLE_KEY for Clerk auth
